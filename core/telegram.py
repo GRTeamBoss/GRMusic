@@ -1,4 +1,4 @@
-import re
+import re, subprocess
 
 from telebot import types
 
@@ -60,6 +60,7 @@ def track(message, id=False, url=False, call=False):
             mp3 = open(tracks, 'rb')
             music = mp3.read()
             mp3.close()
+            subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
             bot.send_audio(message.message.chat.id, music)
     else:
         if id is True:
@@ -72,6 +73,7 @@ def track(message, id=False, url=False, call=False):
                 mp3 = open(tracks, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
         elif url is True:
             uri = re.findall(r"/{1}[\w\W]{5}/{1}[\d]+/{1}[\w\W]{5}/{1}[\d]+", message.text.split()[1])[0]
@@ -82,6 +84,7 @@ def track(message, id=False, url=False, call=False):
                 mp3 = open(tracks, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
             except Exception:
                 bot.send_message(message.chat.id, "Your URI is invalid, try again!")
@@ -108,6 +111,7 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
     elif url is True:
         uri = re.findall(r"/{1}[\w\W]{5}/{1}[\d]+/{1}[\w\W]{9}/{1}[\d]+", message.text.split()[1])[0]
@@ -121,6 +125,7 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
     else:
         resp_name = ParseIDName(playlist=True, playlist_name=message.text.split(" ", 1)[1]).playlistName()
@@ -133,6 +138,7 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
 
 
@@ -149,6 +155,7 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
+                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
     elif url is True:
         uri = re.findall(r"/{1}[\w\W]{6}/{1}[\d]+", message.text.split()[1])[0]
@@ -164,6 +171,7 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
+                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
     else:
         resp_name = ParseIDName(artist=True, artist_name=message.text.split(" ", 1)[1]).artistName()
@@ -178,6 +186,7 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
+                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
 
 
@@ -193,6 +202,7 @@ def album(message, id=False, url=False, call=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
+                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                 bot.send_audio(message.message.chat.id, music)
     else:
         if id is True:
@@ -206,6 +216,7 @@ def album(message, id=False, url=False, call=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
+                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
         elif url is True:
             uri= re.findall(r"/{1}[\w\W]{5}/{1}[\d]+", message.text.split()[1])[0]
@@ -219,6 +230,7 @@ def album(message, id=False, url=False, call=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
+                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
         else:
             resp_name = ParseIDName(album=True, album_name=message.text.split(" ", 1)[1]).albumName()
