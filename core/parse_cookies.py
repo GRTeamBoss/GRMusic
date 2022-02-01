@@ -5,9 +5,9 @@ import sqlite3
 class ParseCookies:
 
 
-    __PWD_TO_PACKAGE = '/home/jasur/Code/python/utils/programms/yandex_music_parse/package/'
+    __PWD_TO_PACKAGE = '/home/user/git/GRMusic/'
     __PWD_TO_TEMP = f'{__PWD_TO_PACKAGE}TEMP/'
-    __PWD_TO_DB = '/home/jasur/.mozilla/firefox/1svev97e.default-release/'
+    __PWD_TO_DB = '/home/user/.mozilla/firefox/x8afeiud.default-release/'
     __NAME_DB = 'cookies.sqlite'
 
 
@@ -16,7 +16,7 @@ class ParseCookies:
 
 
     def cp(self) -> str:
-        cmd = f'cp {self.__PWD_TO_DB}{self.__NAME_DB} {self.__PWD_TO_TEMP}'
+        cmd = f'if [[ -e {self.__PWD_TO_DB}{self.__NAME_DB} ]]; then cp {self.__PWD_TO_DB}{self.__NAME_DB} {self.__PWD_TO_TEMP}; fi;'
         os.system(cmd)
 
 

@@ -55,7 +55,7 @@ def parse_track_id_callback(call):
         "/trackid": track,
         "/albumid": album,
     }
-    funcs[call.data.split()[0]](call.message, call=True)
+    funcs[call.data.split()[0]](call, call=True)
 
 
 if __name__ == "__main__":

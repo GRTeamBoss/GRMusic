@@ -55,12 +55,12 @@ def track(message, id=False, url=False, call=False):
                 message_id=message.message.message_id
             )
         else:
-            tracks = YandexParseMusic(track=call.data.split()[1], ref_album=ref_album).getTrack()
-            bot.send_message(call.message.chat.id, f"Track {tracks.split('/')[-1]} Loading...")
+            tracks = YandexParseMusic(track=message.data.split()[1], ref_album=ref_album).getTrack()
+            bot.send_message(message.message.chat.id, f"Track {tracks.split('/')[-1]} Loading...")
             mp3 = open(tracks, 'rb')
             music = mp3.read()
             mp3.close()
-            bot.send_audio(call.message.chat.id, music)
+            bot.send_audio(message.message.chat.id, music)
     else:
         if id is True:
             ref_album = YandexParseMusic(track=message.text.split()[1]).getRefAlbum()
