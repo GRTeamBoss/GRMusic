@@ -4,30 +4,39 @@ from core.token import bot
 
 
 def user_command(message, call=False):
+    print("* user_command")
     _commands = (
         "/start",
         "/help",
     )
-    if message.text in _commands:
-        return True
+    if call is True:
+        if message.data in _commands:
+            return True
     else:
-        return False
+        if message.text in _commands:
+            return True
+    return False
 
 
 def apps_command_name(message, call=False):
+    print("* apps_command_name")
     _commands = (
         '/trackname',
         '/albumname',
         '/artistname',
         '/playlistname',
     )
-    if message.text.split(" ")[0] in _commands and message.text.split(" ")[1] != "":
-        return True
+    if call is True:
+        if message.data.split()[0] in _commands and message.data.split()[1] != "":
+            return True
     else:
-        return False
+        if message.text.split(" ")[0] in _commands and message.text.split(" ")[1] != "":
+            return True
+    return False
 
 
 def apps_command_id(message, call=False):
+    print("* apps_command_id")
     _commands = (
         '/trackid',
         '/albumid',
@@ -39,16 +48,14 @@ def apps_command_id(message, call=False):
             if message.text.split(" ")[0] == "/playlistid" and message.text.split(" ")[1].find(":") >= 0:
                 return True
             return True
-        else:
-            return False
     else:
-        if call.data.split()[0] in _commands:
+        if message.data.split()[0] in _commands:
             return True
-        else:
-            return False
+    return False
 
 
 def apps_command_url(message):
+    print("* apps_command_url")
     _commands = (
         '/trackurl',
         '/albumurl',

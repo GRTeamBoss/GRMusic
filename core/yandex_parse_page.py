@@ -4,6 +4,8 @@ from typing import Union
 import requests
 from bs4 import BeautifulSoup
 
+from core.parse_cookies import ParseCookies
+
 
 class ParseIDName:
 
@@ -30,11 +32,11 @@ class ParseIDName:
 
 
     def trackName(self) -> any:
+        print("* trackName")
         data = BeautifulSoup(self.parsePage(self.track_name, 'track'), 'lxml')
         if data:
             data_track_name = data.find_all('div', attrs={'class': 'd-track__name', 'title': self.track_name})
             if data_track_name:
-                del data_track_name
                 track_meta = []
                 track_link = data.find_all('a', attrs={'class': ['d-track__title', 'deco-link', 'deco-link_stronger']}, text=f' {self.track_name} ')
                 for item in track_link:
@@ -49,6 +51,7 @@ class ParseIDName:
 
 
     def artistName(self):
+        print("* artistName")
         data = BeautifulSoup(self.parsePage(self.artist_name, 'artist'), 'lxml')
         if data:
             artist_link = data.find('div', attrs={'class': ['d-link', 'deco-link'], 'title': self.artist_name})
@@ -59,6 +62,7 @@ class ParseIDName:
 
 
     def albumName(self):
+        print("* albumName")
         data = BeautifulSoup(self.parsePage(self.album_name, 'album'), 'lxml')
         if data:
             data_album_name = data.find_all('a', attrs={'class': ['d-link', 'deco-link', 'album__caption']}, text=self.album_name)
@@ -76,6 +80,7 @@ class ParseIDName:
 
 
     def playlistName(self) -> any:
+        print("* playlistName")
         data = BeautifulSoup(self.parsePage(self.playlist_name, 'playlist'), 'lxml')
         if data:
             data_playlist_name = data.find('div', attrs={'class': ['playlist__title', 'deco-typo', 'typo-main'], 'title': self.playlist_name})
@@ -89,7 +94,22 @@ class ParseIDName:
 
 
     def track_meta(self, id: Union[str, int]) -> dict:
-        page = requests.get(f"https://music.yandex.ru/handlers/track.jsx?track={id}")
+        print("* track_meta")
+        _HEADERS_JSX = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Connection": "keep-alive",
+            "Cookie": ParseCookies().main(),
+            'Host': "music.yandex.ru",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0"
+        }
+        page = requests.get(f"https://music.yandex.ru/handlers/track.jsx?track={id}",  headers=_HEADERS_JSX)
         if page.status_code == 200:
             meta = {}
             data = page.json()
@@ -103,7 +123,22 @@ class ParseIDName:
 
 
     def album_meta(self, id: Union[str, int]) -> dict:
-        page = requests.get(f"https://music.yandex.ru/handlers/album.jsx?album={id}")
+        print("* album_meta")
+        _HEADERS_JSX = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Connection": "keep-alive",
+            "Cookie": ParseCookies().main(),
+            'Host': "music.yandex.ru",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0"
+        }
+        page = requests.get(f"https://music.yandex.ru/handlers/album.jsx?album={id}", headers=_HEADERS_JSX)
         if page.status_code == 200:
             meta = {}
             data = page.json()

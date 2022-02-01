@@ -48,7 +48,9 @@ domen is should be like _https://music.yandex.ru_
 
 
 def track(message, id=False, url=False, call=False):
+    print("* track")
     if call is True:
+        print("* track > call")
         ref_album = YandexParseMusic(track=message.data.split()[1]).getRefAlbum()
         if ref_album == "FAIL":
             bot.edit_message_text(chat_id=message.message.chat.id, text="Your request not finded, try another id!",
@@ -60,10 +62,12 @@ def track(message, id=False, url=False, call=False):
             mp3 = open(tracks, 'rb')
             music = mp3.read()
             mp3.close()
-            subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
+            subprocess.run(f"if [[ -e ./Music/'{tracks}' ]]; then rm ./Music/'{tracks}'; fi", shell=True)
             bot.send_audio(message.message.chat.id, music)
     else:
+        print("* track > message")
         if id is True:
+            print("* track > > id")
             ref_album = YandexParseMusic(track=message.text.split()[1]).getRefAlbum()
             if ref_album == "FAIL":
                 bot.send_message(message.chat.id, "Your request not finded, try another id!")
@@ -73,9 +77,10 @@ def track(message, id=False, url=False, call=False):
                 mp3 = open(tracks, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{tracks}' ]]; then rm ./Music/'{tracks}'; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
         elif url is True:
+            print("* track > > url")
             uri = re.findall(r"/{1}[\w\W]{5}/{1}[\d]+/{1}[\w\W]{5}/{1}[\d]+", message.text.split()[1])[0]
             _, album, album_id, track, track_id = uri.split("/")
             try:
@@ -84,11 +89,12 @@ def track(message, id=False, url=False, call=False):
                 mp3 = open(tracks, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{tracks} ]]; then rm ./Music/{tracks}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{tracks}' ]]; then rm ./Music/'{tracks}'; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
             except Exception:
                 bot.send_message(message.chat.id, "Your URI is invalid, try again!")
         else:
+            print("* track > > many values")
             resp_name = ParseIDName(track=True, track_name=message.text.split(" ", 1)[1]).trackName()
             if resp_name is False:
                 bot.send_message(message.chat.id, 'Your request not finded, try another name!')
@@ -100,7 +106,9 @@ def track(message, id=False, url=False, call=False):
 
 
 def playlist(message, id=False, url=False):
+    print("* playlist")
     if id is True:
+        print("* playlist > id")
         temp = message.text.split(' ')[1].split(":")
         tracks = YandexParseMusic(playlist={'owner': temp[0], 'kinds': temp[1]}).getPlaylist()
         if tracks == "FAIL":
@@ -111,9 +119,10 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
     elif url is True:
+        print("* playlist > url")
         uri = re.findall(r"/{1}[\w\W]{5}/{1}[\d]+/{1}[\w\W]{9}/{1}[\d]+", message.text.split()[1])[0]
         _, users, owner, playlist, kinder = uri.split("/")
         tracks = YandexParseMusic(playlist={"owner": owner, "kinds": kinder}).getPlaylist()
@@ -125,7 +134,7 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
     else:
         resp_name = ParseIDName(playlist=True, playlist_name=message.text.split(" ", 1)[1]).playlistName()
@@ -138,12 +147,14 @@ def playlist(message, id=False, url=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                 bot.send_audio(message.chat.id, music)
 
 
 def artist(message, id=False, url=False):
+    print("* artist")
     if id is True:
+        print("* artist > id")
         tracks = YandexParseMusic(artist=message.text.split()[1]).getArtist()
         if tracks == "FAIL":
             bot.send_message(message.chat.id, "Your request not finded, try another id!")
@@ -155,9 +166,10 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
-                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                    subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
     elif url is True:
+        print("* artist > url")
         uri = re.findall(r"/{1}[\w\W]{6}/{1}[\d]+", message.text.split()[1])[0]
         _, artist, artist_id = uri.split("/")
         tracks = YandexParseMusic(artist=artist_id).getArtist()
@@ -171,7 +183,7 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
-                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                    subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
     else:
         resp_name = ParseIDName(artist=True, artist_name=message.text.split(" ", 1)[1]).artistName()
@@ -186,12 +198,14 @@ def artist(message, id=False, url=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
-                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                    subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
 
 
 def album(message, id=False, url=False, call=False):
+    print("* album")
     if call is True:
+        print("* album > call")
         ref_album = '/album/{}'.format(message.data.split()[1])
         tracks = YandexParseMusic(album=message.data.split()[1], ref_album=ref_album).getAlbum()
         if tracks == "FAIL":
@@ -202,10 +216,12 @@ def album(message, id=False, url=False, call=False):
                 mp3 = open(item, 'rb')
                 music = mp3.read()
                 mp3.close()
-                subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                 bot.send_audio(message.message.chat.id, music)
     else:
+        print("* album > message")
         if id is True:
+            print("* album > > id")
             ref_album = '/album/{}'.format(message.text.split()[1])
             tracks = YandexParseMusic(album=message.text.split()[1], ref_album=ref_album).getAlbum()
             if tracks == "FAIL":
@@ -216,9 +232,10 @@ def album(message, id=False, url=False, call=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
-                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                    subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
         elif url is True:
+            print("* album > > url")
             uri= re.findall(r"/{1}[\w\W]{5}/{1}[\d]+", message.text.split()[1])[0]
             _, album, album_id = uri.split("/")
             tracks = YandexParseMusic(album=album_id, ref_album=uri).getAlbum()
@@ -230,7 +247,7 @@ def album(message, id=False, url=False, call=False):
                     mp3 = open(item, 'rb')
                     music = mp3.read()
                     mp3.close()
-                    subprocess.run(f"if [[ -e ./Music/{item} ]]; then rm ./Music/{item}; fi", shell=True)
+                    subprocess.run(f"if [[ -e ./Music/'{item}' ]]; then rm ./Music/'{item}'; fi", shell=True)
                     bot.send_audio(message.chat.id, music)
         else:
             resp_name = ParseIDName(album=True, album_name=message.text.split(" ", 1)[1]).albumName()

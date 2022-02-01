@@ -49,7 +49,8 @@ def parse_track_url(message):
     }
     funcs[message.text.split()[0]](message, url=True)
 
-@bot.inline_handler(func=lambda call: apps_command_id(call.data, call=True) is True)
+
+@bot.callback_query_handler(func=lambda call: apps_command_id(call, call=True) is True)
 def parse_track_id_callback(call):
     funcs = {
         "/trackid": track,

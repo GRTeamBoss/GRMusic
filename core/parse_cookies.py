@@ -5,7 +5,7 @@ import sqlite3
 class ParseCookies:
 
 
-    __PWD_TO_PACKAGE = '/home/user/git/GRMusic/'
+    __PWD_TO_PACKAGE = '/home/user/git/grteamboss/GRMusic/'
     __PWD_TO_TEMP = f'{__PWD_TO_PACKAGE}TEMP/'
     __PWD_TO_DB = '/home/user/.mozilla/firefox/x8afeiud.default-release/'
     __NAME_DB = 'cookies.sqlite'
@@ -16,11 +16,13 @@ class ParseCookies:
 
 
     def cp(self) -> str:
-        cmd = f'if [[ -e {self.__PWD_TO_DB}{self.__NAME_DB} ]]; then cp {self.__PWD_TO_DB}{self.__NAME_DB} {self.__PWD_TO_TEMP}; fi;'
+        print("* cp")
+        cmd = f'if [[ -e {self.__PWD_TO_DB}{self.__NAME_DB} ]]; then cp {self.__PWD_TO_DB}{self.__NAME_DB} {self.__PWD_TO_TEMP}; fi'
         os.system(cmd)
 
 
     def read_db(self) -> str:
+        print("* read_db")
         data = str()
         db = sqlite3.connect("./TEMP/cookies.sqlite")
         cookies = list(db.cursor().execute('select * from moz_cookies where host GLOB ".yandex.ru"'))
@@ -31,6 +33,7 @@ class ParseCookies:
 
 
     def main(self) -> any:
+        print("* main")
         self.cp()
         content = self.read_db()
         return content
