@@ -2,13 +2,13 @@
 #-*- coding:utf-8 -*-
 
 
-from core.filter import *
-from core.telegram import *
+from core.filter import default_command, music_command_id, music_command_name, music_command_url
+from core.telegram import start, usage, music_callback, music_id, music_name, music_url
 from core.token import bot
 
 
 
-@bot.message_handler(func=lambda message: user_command(message) is True)
+@bot.message_handler(func=lambda message: default_command(message) is True)
 def bot_commands(message):
     funcs = {
         "/start": start,
@@ -17,47 +17,24 @@ def bot_commands(message):
     funcs[message.text](message)
 
 
-@bot.message_handler(func=lambda message: apps_command_name(message) is True)
+@bot.message_handler(func=lambda message: music_command_name(message) is True)
 def parse_track_name(message):
-    funcs = {
-        "/trackname": track,
-        "/albumname": album,
-        "/artistname": artist,
-        "/playlistname": playlist,
-    }
-    funcs[message.text.split()[0]](message)
+    music_name(message)
 
 
-@bot.message_handler(func=lambda message: apps_command_id(message) is True)
+@bot.message_handler(func=lambda message: music_command_id(message) is True)
 def parse_track_id(message):
-    funcs = {
-        "/trackid": track,
-        "/albumid": album,
-        "/artistid": artist,
-        "/playlistid": playlist,
-    }
-    funcs[message.text.split()[0]](message, id=True)
+    music_id(message)
 
 
-@bot.message_handler(func=lambda message: apps_command_url(message) is True)
+@bot.message_handler(func=lambda message: music_command_url(message) is True)
 def parse_track_url(message):
-    funcs = {
-        "/trackurl": track,
-        "/albumurl": album,
-        "/artisturl": artist,
-        "/playlisturl": playlist,
-    }
-    funcs[message.text.split()[0]](message, url=True)
+    music_url(message)
 
 
-@bot.callback_query_handler(func=lambda call: apps_command_id(call, call=True) is True)
+@bot.callback_query_handler(func=lambda call: music_command_id(call, call=True) is True)
 def parse_track_id_callback(call):
-    funcs = {
-        "/trackid": track,
-        "/albumid": album,
-    }
-    funcs[call.data.split()[0]](call, call=True)
-
+    music_callback(call)
 
 if __name__ == "__main__":
     bot.polling(non_stop=True)

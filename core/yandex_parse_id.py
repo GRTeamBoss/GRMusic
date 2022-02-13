@@ -1,17 +1,18 @@
-import hashlib
-import sqlite3
-import time
+import hashlib, sqlite3, time
 
 import requests
 from mutagen.id3 import ID3, COMM, TALB, TPE1, TDRC, TIT2, USLT
 from mutagen.mp3 import MP3
 
-from core.parse_cookies import ParseCookies
+from core.parse_cookies import *
 
 
 class YandexParseMusic:
 
-    __HOST = 'music.yandex.ru'
+    __HOST_API = False
+    _HEADERS_MDS = False
+    _HEADER_API = False
+    _HEADER_MPEG = False
 
 
     def __init__(self, track=False, artist=False, album=False, ref_album=False,  playlist=False) -> None:
@@ -20,10 +21,7 @@ class YandexParseMusic:
         self.album = album
         self.ref_album = ref_album
         self.playlist = playlist
-        self.__HOST_API = False
-        self._HEADERS_MDS = False
-        self._HEADER_API = False
-        self._HEADER_MPEG = False
+        self.__HOST = 'music.yandex.ru'
         self._HEADERS_JSX = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Encoding": "gzip, deflate, br",
@@ -40,37 +38,8 @@ class YandexParseMusic:
         }
 
 
-    def trackDownloadedMeta(self, artist: str, title: str, album: str, track_text: str, year: str) -> dict:
-        print("* trackDownloadedMeta")
-        content = dict(artist=artist, album=album, title=title, track_text=track_text, year=year)
-        return content
-
-
-    def trackDownloadedInfo(self, codec: str, bitrate: int, src: str, gain: bool, preview: bool) -> dict:
-        print("* trackDownloadedInfo")
-        content = {
-            'codec': codec,
-            'bitrate': bitrate,
-            'src': src,
-            'gain': gain,
-            'preview': preview,
-        }
-        return content
-
-
-    def fileDownloadedInfo(self, s: str, ts: str, path: str, host: str) -> dict:
-        print("* fileDownloadedInfo")
-        content = {
-            's': s,
-            'ts': ts,
-            'path': path,
-            'host': host,
-        }
-        return content
-
-
     def getObject(self, type=False, path=False, header=False) -> any:
-        print("* getObject")
+        print("* getAPI")
         if path:
             url = 'https://' + path
         else: 
@@ -79,22 +48,24 @@ class YandexParseMusic:
             response = requests.get(url, headers=header)
         else:
             response = requests.get(url)
-        print("response.status_code > ", response.status_code)
         if response.status_code == 200:
             if type == 'text':
                 response.encoding = 'utf-8'
                 return response.text
             elif type == 'json':
-                return response.json()
+                try:
+                    return response.json()
+                except Exception:
+                    return False
         else:
-            return f'status_code -> {response.status_code}'
+            return False
 
 
     def getRefAlbum(self) -> str:
         print("* getRefAlbum")
-        resp = self.getObject(type='json', path=f'{self.__HOST}/handlers/track.jsx?track={self.track}')
-        if isinstance(resp, str):
-            return "FAIL"
+        resp = self.getObject(type='json', path=f'{self.__HOST}/handlers/track.jsx?track={self.track}', header=self._HEADERS_JSX)
+        if isinstance(resp, str) or resp is False:
+            return False
         album_id = resp['track']['albums'][0]['id']
         ref_album = f'/album/{album_id}/track/{self.track}'
         return ref_album
@@ -102,15 +73,18 @@ class YandexParseMusic:
 
     def getTrack(self) -> str:
         print("* getTrack")
-        resp = self.getTrackLink()
-        return resp
+        try:
+            resp = self.getTrackLink()
+            return resp
+        except Exception:
+            return False
 
 
     def getAlbum(self) -> list:
         print("* getAlbum")
         response = self.getObject(type='json', path='{}/handlers/album.jsx?album={}'.format(self.__HOST, self.album), header=self._HEADERS_JSX)
         if isinstance(response, str):
-            return "FAIL"
+            return False
         data = list()
         for disk in range(len(response['volumes'])):
             for num in range(len(response['volumes'][disk])):
@@ -124,7 +98,7 @@ class YandexParseMusic:
         print("* getArtist")
         response = self.getObject(type='json', path='{}/handlers/artist.jsx?artist={}'.format(self.__HOST, self.artist), header=self._HEADERS_JSX)
         if isinstance(response, str):
-            return "FAIL"
+            return False
         albums = response['count']['directAlbums']
         data = dict()
         for num in albums:
@@ -140,7 +114,7 @@ class YandexParseMusic:
         print("* getPlaylist")
         response = self.getObject(type='json', path='{}/handlers/playlist.jsx?owner={}&kinds={}'.format(self.__HOST, self.playlist['owner'], self.playlist['kinds']), header=self._HEADERS_JSX)
         if isinstance(response, str):
-            return "FAIL"
+            return False
         track_count = response['playlist']['trackCount']
         data = list()
         for num in range(track_count):
@@ -161,9 +135,9 @@ class YandexParseMusic:
         album = response['track']['albums'][0]['title']
         title = response['track']['title']
         year = str(response['track']['albums'][0]['year'])
-        if response['lyric']:
+        try:
             track_text = response['lyric'][0]['fullLyrics']
-        else:
+        except Exception:
             track_text = ''
         meta_content = dict(artist=artist, album=album, title=title, track_text=track_text, year=year)
         data[f'{title}_track_meta'] = meta_content
@@ -183,13 +157,7 @@ class YandexParseMusic:
             temp = YandexParseMusic(track=track_id).getTrackMeta()
             meta_content['{}_track_meta'.format(track_name)] = temp['{}_track_meta'.format(track_name)]
         data['tracks'] = meta_content
-        data['{}_album_meta'.format(album_name)] = {
-            'album': response['title'],
-            'year': response['year'],
-            'artist': response['artists'][0]['name'],
-            'genre': response['genre'],
-            'tracks': response['trackCount'],
-        }
+        data['{}_album_meta'.format(album_name)] = {'album': response['title'],'year': response['year'],'artist': response['artists'][0]['name'],'genre': response['genre'],'tracks': response['trackCount'],}
         return data
 
 
@@ -210,12 +178,7 @@ class YandexParseMusic:
             meta_content['{}_tracks'.format(album_name)] = temp['tracks']
             meta_content['{}_album_meta'.format(album_name)] = temp['{}_album_meta'.format(album_name)]
         data['albums'] = meta_content
-        data['{}_artist_meta'.format(artist)] = {
-            'artist': artist, 
-            'genres': genres,
-            'albums': albums,
-            'tracks': tracks,
-        }
+        data['{}_artist_meta'.format(artist)] = {'artist': artist,'genres': genres,'albums': albums,'tracks': tracks,}
         return data
 
 
@@ -234,11 +197,7 @@ class YandexParseMusic:
             temp = YandexParseMusic(track=track_id).getTrackMeta()
             meta_content['{}_track_meta'.format(track_name)] = temp['{}_track_meta'.format(track_name)]
         data['{}_tracks'.format(playlist_name)] = meta_content
-        data['{}_playlist_meta'] = {
-            'playlist': playlist_name,
-            'tracks': track_count,
-            'duration': playlist_duration,
-        }
+        data['{}_playlist_meta'] = {'playlist': playlist_name,'tracks': track_count,'duration': playlist_duration,}
         return data
 
 
@@ -249,10 +208,10 @@ class YandexParseMusic:
         track_name = list(self.getTrackMeta().values())[0]['title']
         time.sleep(1)
         response_track = self.getObject(type='json', path='{}{}'.format(self.__HOST, url), header=temp_api_header)
-        trackInfo = self.trackDownloadedInfo(codec=response_track['codec'], bitrate=response_track['bitrate'], src=response_track['src'], gain=response_track['gain'], preview=response_track['preview'])
+        trackInfo = dict(codec=response_track['codec'], bitrate=response_track['bitrate'], src=response_track['src'], gain=response_track['gain'], preview=response_track['preview'])
         time.sleep(1)
         response_file = self.getObject(type='json', path='{}&format=json&external-domain={}&overembed=no&t_={}'.format(trackInfo['src'][2::], self.__HOST, ''.join(time.time().__str__()[0:14].split('.'))), header=self._HEADERS_MDS)
-        fileInfo = self.fileDownloadedInfo(s=response_file['s'], ts=response_file['ts'], path=response_file['path'], host=response_file['host'])
+        fileInfo = dict(s=response_file['s'], ts=response_file['ts'], path=response_file['path'], host=response_file['host'])
         temp = 'XGRlBW9FXlekgbPrRHuSiA{}{}'.format(fileInfo['path'][1::], fileInfo['s'])
         md5hash = hashlib.md5(temp.encode())
         path = '/get-mp3/{}/{}{}?track-id={}'.format(md5hash.hexdigest(), fileInfo['ts'], fileInfo['path'], self.track)
