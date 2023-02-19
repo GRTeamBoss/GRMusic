@@ -1,6 +1,6 @@
+import os
+
 from telebot import TeleBot
 
-from .env import TOKEN
 
-
-bot = TeleBot(TOKEN)
+bot = TeleBot(os.environ["TOKEN"])
