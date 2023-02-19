@@ -1,5 +1,6 @@
 Music/*
 *.code-workspace
-**/__pycache__/*
+**/__pycache__/
 .vscode/
 bot.db
+**/env.py

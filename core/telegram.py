@@ -1,22 +1,22 @@
-import re, subprocess
-from typing import Union
+import pathlib
+import re
 
 from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from core.token import bot
-from core.yandex_parse_id import *
-from core.yandex_parse_page import *
+from core.yandex_music_download import YandexMusicAPI
+from core.yandex_music_parse_id import YandexMusicParseIds
 
 
 def start(message):
     intro = """
-    Hello, I am `GRSearch_BOT`
-    My tasks:
-    ---
-    download music from `https://music.yandex.ru`
-    ---
-    If you want too use this _bot_, you should will pay for this!
-    """
+Hello, I am `GRSearch_BOT`
+My tasks:
+---
+download music from `https://music.yandex.ru`
+---
+If you want too use this _bot_, you should will pay for this!
+"""
     bot.send_message(message.chat.id, intro)
 
 
@@ -24,9 +24,9 @@ def usage(message):
     info = """
 commands:
 ---
-/trackid [value]
-/albumid [number]
-/artistid [number]
+/trackid [id]
+/albumid [id]
+/artistid [id]
 /playlistid [owner:kinds]
 ---
 /trackname [name]
@@ -40,169 +40,213 @@ commands:
 /playlisturl [URI]
 -------
 Example:
-`/playlistid` yandex-best:88347328
+`/trackid` 123213213
+`/playlistid` yandex-best:123213213
+--
+`/trackname` Phonk
+`/trackname` Phonk Hard
+--
+`/trackurl` https://music.yandex.ru/album/23326838/track/106799856
+`/trackurl` 23326838:106799856
+`/trackurl` 23326838/106799856
+`/albumurl` https://music.yandex.ru/album/24217929
+`/albumurl` 24217929
+`/artisturl` https://music.yandex.ru/artist/4545156
+`/artisturl` 4545156
+`/playlisturl` https://music.yandex.ru/users/yamusic-daily/playlists/110900658
+`/playlisturl` yamusic-daily/110900658
+`/playlisturl` yamusic-daily:110900658
 -
-`/trackurl` _https://music.yandex.ru/album/4274705/track/34648265_
-domen is should be like _https://music.yandex.ru_
-    """
+"""
     bot.send_message(message.chat.id, info)
 
+def music_id(message: Message):
+    __funcs[message.text.split()[0]](message, identificator=True)
 
-def music_name(message: Message) -> None:
-    funcs = {"/trackname": track,"/albumname": album,"/artistname": artist,"/playlistname": playlist,}
-    funcs[message.text.split()[0]](message)
+def music_name(message: Message):
+    __funcs[message.text.split()[0]](message, name=True)
 
-def music_id(message: Message) -> None:
-    funcs = {"/trackid": track,"/albumid": album,"/artistid": artist,"/playlistid": playlist,}
-    funcs[message.text.split()[0]](message, id=True)
+def music_url(message: Message):
+    __funcs[message.text.split()[0]](message, url=True)
 
-def music_url(message: Message) -> None:
-    funcs = {"/trackurl": track,"/albumurl": album,"/artisturl": artist,"/playlisturl": playlist,}
-    funcs[message.text.split()[0]](message, url=True)
-
-def music_callback(call: CallbackQuery) -> None:
-    funcs = {"/trackid": track,"/albumid": album,}
-    funcs[call.data.split()[0]](call, callback=True)
+def music_callback(call: CallbackQuery):
+    __funcs[call.data.split()[0]](call, callback=True)
 
 
-def track(method: Union[Message, CallbackQuery], url=False, id=False, callback=False) -> None:
-    message = call = False
-    if url is True or id is True or any((url, id, callback)) is False:
-        message: Message = method
-    elif callback is True:
-        call: CallbackQuery = method
-    if url:
-        ref_album = re.findall(r"/album/[\d]+/track/[\d]+", message.text.split()[1])[0]
-        _, _, album_id, _, track_id = ref_album.split("/")
-        track = YandexParseMusic(track=track_id, album=album_id, ref_album=ref_album).getTrack()
-    elif id:
-        ref_album = YandexParseMusic(track=message.text.split()[1]).getRefAlbum()
-        track = YandexParseMusic(track=message.text.split()[1], ref_album=ref_album).getTrack()
-    elif callback:
-        ref_album = YandexParseMusic(track=call.data.split()[1]).getRefAlbum()
-        track = YandexParseMusic(track=call.data.split()[1], ref_album=ref_album).getTrack()
-    else:
-        track_id = ParseIDName(track_name=" ".join(message.text.split()[1:]), track=True).trackName()
-        try:
-            if len(track_id) > 1:
-                track = None
-                markup = InlineKeyboardMarkup(row_width=1)
-                for item in track_id:
-                    markup.add(InlineKeyboardButton(f"{item['name']} {item['artist']}", callback_data=f"/trackid {item['id']}"))
-                bot.send_message(message.chat.id, "Please choose track:", reply_markup=markup)
+def send_track(obj, identificator=None, name=None, url=None, callback=None):
+    track_id = []
+    if identificator is True:
+        track = YandexMusicAPI(track=obj.text.split()[1]).download_track()
+        if track is None:
+            bot.send_message(obj.chat.id, "Connection is lost!")
+        else:
+            file = pathlib.Path(track).read_bytes()
+            bot.send_audio(obj.chat.id, file)
+    elif name is True:
+        track_id = YandexMusicParseIds(track_name="".join(obj.text.split()[1:])).get_track_id()
+        markup = InlineKeyboardMarkup(row_width=1)
+        for item in track_id:
+            markup.add(InlineKeyboardButton(f"{item['title']} {item['artists'][0]['name']}", callback_data=f"/trackid {item['id']} {item['albums'][0]['id']}"))
+        bot.send_message(obj.chat.id, "Please choose track:", reply_markup=markup)
+    elif url is True:
+        track_url = re.findall(r"/album/[\d]*/track/[\d]*", obj.text.split()[1])
+        album_id = track_id = None
+        if len(track_url) == 0:
+            track_match = obj.text.split()[1].split(':')
+            if len(track_match) == 1:
+                track_match = obj.text.split()[1].split('/')
             else:
-                ref_album = YandexParseMusic(track=track_id[0]['id']).getRefAlbum()
-                track = YandexParseMusic(track=track_id[0]['id'], ref_album=ref_album).getTrack()
-        except Exception:
-            track = False
-    if track is False:
-        if callback is True:
-            bot.send_message(chat_id=call.message.chat.id, text="_Error!_", parse_mode="MARKDOWN")
+                album_id, track_id = track_match[::]
+                if len(track_match) == 1:
+                    bot.send_message(obj.chat.id, "Invalid value!")
+                else:
+                    album_id, track_id = track_match[::]
         else:
-            bot.send_message(message.chat.id, "_Error!_", parse_mode="MARKDOWN")
-    elif track is None:
-        pass
-    else:
-        file = open(track, "rb")
-        mp3 = file.read()
-        file.close()
-        subprocess.run(f"if [ -e '{track}' ]; then rm '{track}'; else echo 'No'; fi", shell=True)
-        if callback is True:
-            bot.send_audio(call.message.chat.id, mp3)
+            _, _, album_id, _, track_id = track_url[0].split('/')
+        track = YandexMusicAPI(track=track_id, album=album_id).download_track()
+        if track is None:
+            bot.send_message(obj.chat.id, "Connection is lost!")
         else:
-            bot.send_audio(message.chat.id, mp3)
-
-
-def album(method: Union[Message, CallbackQuery], url=False, id=False, callback=False) -> None:
-    message = call = False
-    if url is True or id is True or any((url, id, callback)) is False:
-        message: Message = method
+            file = pathlib.Path(track).read_bytes()
+            bot.send_audio(obj.chat.id, file)
     elif callback is True:
-        call: CallbackQuery = method
-    if url:
-        album_path = re.findall(r"/album/[\d]+", message.text.split()[1])[0]
-        _, _, album_id = album_path.split("/")
-        album = YandexParseMusic(album=album_id).getAlbum()
-    elif id:
-        album = YandexParseMusic(album=message.text.split()[1]).getAlbum()
-    elif callback:
-        album = YandexParseMusic(album=call.data.split()[1]).getAlbum()
-    else:
-        album_id = ParseIDName(album_name=" ".join(message.text.split()[1:]), album=True).albumName()
-        try:
-            if len(album_id) > 1:
-                album = None
-                markup = InlineKeyboardMarkup(row_width=1)
-                for item in album_id:
-                    markup.add(InlineKeyboardButton(f"{item['name']} {item['artist']}", callback_data=f"/albumid {item['id']}"))
-                bot.send_message(message.chat.id, "Please choose album:", reply_markup=markup)
-            else:
-                album = YandexParseMusic(album=album_id[0]["id"]).getAlbum()
-        except Exception:
-            album = False
-    if album is False:
-        if callback:
-            bot.send_message(call.message.chat.id, "_Error!_", parse_mode="MARKDOWN")
-        else:
-            bot.send_message(message.chat.id, "_Error!_", parse_mode="MARKDOWN")
-    elif album is None:
-        pass
-    else:
-        if callback is True:
-            for track in album:
-                file = open(track, "rb")
-                mp3 = file.read()
-                file.close()
-                subprocess.run(f"if [ -e '{track}' ]; then rm '{track}'; else echo 'No'; fi", shell=True)
-                bot.send_audio(call.message.chat.id, mp3)
+        track = YandexMusicAPI(track=obj.data.split()[1], album=obj.data.split()[2]).download_track()
+        file = pathlib.Path(track).read_bytes()
+        bot.send_audio(obj.message.chat.id, file)
+
+
+def send_album(obj, identificator=None, name=None, url=None, callback=None) -> None:
+    if identificator is True:
+        album = YandexMusicAPI(album=obj.text.split()[1]).download_album()
+        if album is None:
+            bot.send_message(obj.chat.id, "Invalid value!")
         else:
             for track in album:
-                file = open(track, "rb")
-                mp3 = file.read()
-                file.close()
-                subprocess.run(f"if [ -e '{track}' ]; then rm '{track}'; else echo 'No'; fi", shell=True)
-                bot.send_audio(message.chat.id, mp3)
-
-
-def artist(message: Message, url=False, id=False) -> None:
-    if url:
-        artist_path = re.findall(r"/artist/[\d]+", message.text.split()[1])[0]
-        _, _, artist_id = artist_path.split("/")
-        artist = YandexParseMusic(artist=artist_id).getArtist()
-    elif id:
-        artist = YandexParseMusic(artist=message.text.split()[1]).getArtist()
-    else:
-        artist_id = ParseIDName(artist_name=" ".join(message.text.split()[1:]), artist=True).artistName()
-        artist = YandexParseMusic(artist=artist_id).getArtist()
-    if artist is False:
-        bot.send_message(message.chat.id, "_Error!_", parse_mode="MARKDOWN")
-    else:
-        for album in artist:
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.chat.id, file)
+    elif name is True:
+        album_id = YandexMusicParseIds(album_name=" ".join(obj.text.split()[1:])).get_album_id()
+        album = None
+        markup = InlineKeyboardMarkup(row_width=1)
+        for item in album_id:
+            markup.add(InlineKeyboardButton(f"{item['title']} {item['artists'][0]['name']}", callback_data=f"/albumid {item['id']}"))
+        bot.send_message(obj.chat.id, "Please choose album:", reply_markup=markup)
+    elif url is True:
+        album_url = re.findall(r"/album/[\d]+", obj.text.split()[1])
+        if len(album_url) == 0:
+            album_id = obj.text.split()[1]
+        else:
+            _, _, album_id = album_url[0].split("/")
+        album = YandexMusicAPI(album=album_id).download_album()
+        if album is None:
+            bot.send_message(obj.chat.id, "Invalid value!")
+        else:
             for track in album:
-                file = open(track, "rb")
-                mp3 = file.read()
-                file.close()
-                subprocess.run(f"if [ -e '{track}' ]; then rm '{track}'; else echo 'No'; fi", shell=True)
-                bot.send_audio(message.chat.id, mp3)
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.chat.id, file)
+    elif callback is True:
+        album = YandexMusicAPI(album=obj.data.split()[1]).download_album()
+        if album is None:
+            bot.send_message(obj.message.chat.id, "Connection is lost!")
+        else:
+            for track in album:
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.message.chat.id, file)
 
 
-def playlist(message: Message, url=False, id=False) -> None:
-    if url:
-        playlist_path = re.findall(r"/users/[\w\S]+/[\d]+", message.text.split()[1])[0]
-        _, _, owner, _, kind = playlist_path.split("/")
-        playlist = YandexParseMusic(playlist=dict(owner=owner, kinds=kind)).getPlaylist()
-    elif id:
-        owner, kind = message.text.split()[1].split(":")
-        playlist = YandexParseMusic(playlist=dict(owner=owner, kinds=kind)).getPlaylist()
-    else:
-        owner, kind = ParseIDName(playlist_name=" ".join(message.text.split()[1:]), playlist=True).playlistName()
-        playlist = YandexParseMusic(playlist=dict(owner=owner, kinds=kind)).getPlaylist()
-    if playlist is False:
-        bot.send_message(message.chat.id, "_Error!_", parse_mode="MARKDOWN")
-    else:
-        for track in playlist:
-            file = open(track, "rb")
-            mp3 = file.read()
-            file.close()
-            subprocess.run(f"if [ -e '{track}' ]; then rm '{track}'; else echo 'No'; fi", shell=True)
-            bot.send_audio(message.chat.id, mp3)
+def send_artist(obj, identificator = None, name=None, url=None, callback=None) -> None:
+    if identificator is True:
+        artist = YandexMusicAPI(artist=obj.text.split()[1]).download_artist()
+        if artist is None:
+            bot.send_message(obj.chat.id, "Invalid value!")
+        else:
+            for album in artist:
+                for track in album:
+                    file = pathlib.Path(track).read_bytes()
+                    bot.send_audio(obj.chat.id, file)
+    elif name is True:
+        artist_id = YandexMusicParseIds(artist_name=" ".join(obj.text.split()[1:])).get_artist_id()
+        markup = InlineKeyboardMarkup(row_width=1)
+        for item in artist_id:
+            markup.add(InlineKeyboardButton(f"{item[0]['name']}", callback_data=f"/artistid {item[0]['id']}"))
+        bot.send_message(obj.chat.id, "Please choose artist:", reply_markup=markup)
+    elif url is True:
+        artist_url = re.findall(r"/artist/[\d]+", obj.text.split()[1])
+        if len(artist_url) == 0:
+            artist_id = obj.text.split()[1]
+        else:
+            _, _, artist_id = artist_url[0].split("/")
+        artist = YandexMusicAPI(artist=artist_id).download_artist()
+        if artist is None:
+            bot.send_message(obj.chat.id, "Invalid value!")
+        else:
+            for album in artist:
+                for track in album:
+                    file = pathlib.Path(track).read_bytes()
+                    bot.send_audio(obj.chat.id, file)
+    elif callback is True:
+        artist = YandexMusicAPI(artist=obj.data.split()[1]).download_artist()
+        if artist is None:
+            bot.send_message(obj.message.chat.id, "Connection is lost!")
+        else:
+            for album in artist:
+                for track in album:
+                    file = pathlib.Path(track).read_bytes()
+                    bot.send_audio(obj.message.chat.id, file)
+
+
+def send_playlist(obj, identificator=None, name=None, url=None, callback=None) -> None:
+    if identificator is True:
+        playlist = YandexMusicAPI(playlist=obj.text.split()[1]).download_playlist()
+        if playlist is None:
+            bot.send_message(obj.chat.id, "Connection is lost!")
+        else:
+            for track in playlist:
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.chat.id, file)
+    elif name is True:
+        playlist_id = YandexMusicParseIds(playlist_name=" ".join(obj.text.split()[1:])).get_playlist_id()
+        markup = InlineKeyboardMarkup(row_width=1)
+        for item in playlist_id:
+            markup.add(InlineKeyboardButton(f"{item['owner']['name']} {item['title']} {item['trackCount']}", callback_data=f"/playlistid {item['owner']['login']}:{item['kind']}"))
+        bot.send_message(obj.chat.id, "Please choose playlist: ", reply_markup=markup)
+    elif url is True:
+        playlist_url = re.findall(r"/users/[\w\S]+/[\d]+", obj.text.split()[1])
+        if len(playlist_url) == 0:
+            owner, kind = obj.text.split()[1].split(':')
+        else:
+            _, _, owner, _, kind = playlist_url[0].split("/")
+        playlist = YandexMusicAPI(playlist=f"{owner}:{kind}").download_playlist()
+        if playlist is None:
+            bot.send_message(obj.chat.id, "Connection is lost!")
+        else:
+            for track in playlist:
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.chat.id, file)
+    elif callback is True:
+        owner, kind = obj.data.split()[1].split(":")
+        playlist = YandexMusicAPI(playlist=f"{owner}:{kind}").download_playlist()
+        if playlist is None:
+            bot.send_message(obj.message.chat.id, "Connection is lost!")
+        else:
+            for track in playlist:
+                file = pathlib.Path(track).read_bytes()
+                bot.send_audio(obj.message.chat.id, file)
+
+
+
+__funcs = {
+        "/trackname": send_track,
+        "/albumname": send_album,
+        "/artistname": send_artist,
+        "/playlistname": send_playlist,
+        "/trackurl": send_track,
+        "/albumurl": send_album,
+        "/artisturl": send_artist,
+        "/playlisturl": send_playlist,
+        "/trackid": send_track,
+        "/albumid": send_album,
+        "/artistid": send_artist,
+        "/playlistid": send_playlist
+}
+

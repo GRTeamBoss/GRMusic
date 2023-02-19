@@ -1,4 +1,6 @@
 from telebot import TeleBot
 
+from env import TOKEN
 
-bot = TeleBot("5032381171:AAF9yEyRTiQVubJWLvXGIMyogGlg5AgJXOs")
+
+bot = TeleBot(TOKEN)
