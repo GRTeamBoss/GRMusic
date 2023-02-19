@@ -64,6 +64,3 @@ def parse_track_url(message):
 @bot.callback_query_handler(func=lambda call: music_command_id(call, call=True) is True and user_registrated(call, call=True) is True and check_user_info(call, call=True) is True)
 def parse_track_id_callback(call):
     music_callback(call)
-
-if __name__ == "__main__":
-    app.run("0.0.0.0", port=443)
