@@ -5,9 +5,7 @@ def ParseEXCEPTION(header, title) -> str:
         'artist': artistException,
         'playlist': playlistException,
     }
-    resp = call_arg[header](title)
-    print(resp)
-    return 'FAIL'
+    return call_arg[header](title)
 
 
 def trackException(title) -> str:

@@ -1,18 +1,17 @@
-import requests, sqlite3, time, pathlib
+import requests, sqlite3, time
 
 from hashlib import md5
 
-from mutagen.mp3 import MP3
-from mutagen.id3 import ID3
-from mutagen.id3._frames import TIT2, TALB, TPE1, TDRC, COMM, USLT, APIC
 
 from core.parse_cookies import *
+from core.token import bot
 
 
 class YandexMusicAPI:
 
 
-    def __init__(self, track=None, artist=None, album=None, playlist=None) -> None:
+    def __init__(self, chat_id=None, track=None, artist=None, album=None, playlist=None) -> None:
+        self.chat_id = chat_id
         self.track_id = track
         self.album_id = album
         self.artist_id = artist
@@ -25,68 +24,38 @@ class YandexMusicAPI:
     def download_playlist(self):
         playlist_info = self.get_playlist_info()
         tracks = playlist_info['playlist']['trackIds']
-        _tmp = []
         for track in tracks:
-            self.track_id = track[0].split(":")[0]
-            _tmp.append(self.download_track())
-        return _tmp
-
-
+            self.track_id = track.split(":")[0]
+            self.download_track()
 
 
     def download_artist(self):
         artist_info = self.get_artist_info()
         albums = artist_info['albums']
-        _tmp = []
         for album in albums:
             self.album_id = album['id']
-            _tmp.append(self.download_album())
-        return _tmp
-
+            self.download_album()
 
 
     def download_album(self):
         album_info = self.get_album_info()
         volumes = album_info['volumes'][0]
-        _tmp = []
         for item in volumes:
             self.track_id = item['id']
-            _tmp.append(self.download_track())
-        return _tmp
+            self.download_track()
 
 
     def download_track(self):
-        track_in_memory = self.check_track_in_db()
-        if track_in_memory is True:
-            filename = self.get_meta_from_db()
-            return f"./Music/{filename}.mp3"
         download_link = self.get_download_link()
         track_info = self.get_track_info()
         _sign = md5(f"XGRlBW9FXlekgbPrRHuSiA{download_link['path'][1::]}{download_link['s']}".encode('utf-8')).hexdigest()
         URI = f"https://{download_link['host']}/get-mp3/{_sign}/{download_link['ts']}{download_link['path']}?track_id={self.track_id}&play=false"
         data = requests.get(URI)
         if data.status_code == 200:
+            print(self.track_id)
             track_meta = track_info['track']
             filename = "_".join(track_info['track']['title'].split(" "))
-            pathlib.Path(f"./Music/{filename}.mp3").touch()
-            pathlib.Path(f"./Music/{filename}.mp3").write_bytes(data.content)
-            mp3 = MP3(f"./Music/{filename}.mp3")
-            mp3.add_tags()
-            mp3.save()
-            id3 = ID3(f"./Music/{filename}.mp3")
-            id3.add(TIT2(encoding=3, text=track_meta['title']))
-            id3.add(TALB(encoding=3, text=track_meta['albums'][0]['title']))
-            id3.add(TPE1(encoding=3, text=track_meta['artists'][0]['name']))
-            id3.add(TDRC(encoding=3, text=str(track_meta['albums'][0]['year'])))
-            id3.add(COMM(encoding=3, desc='Telegram', text='Parsed with @gr_team_music_bot'))
-            if track_info['lyricsAvailable'] is True:
-                id3.add(USLT(encoding=3, desc='lyrics', text=track_info['lyric'][0]['fullLyrics']))
-            album_cover = requests.get("https://"+track_meta['albums'][0]['ogImage'][0:-2]+"200x200")
-            id3.add(APIC(mime="image/jpeg", type=3, data=album_cover.content))
-            id3.save()
-            self.set_meta_in_db(track_info)
-            return f"./Music/{filename}.mp3"
-        return None
+            bot.send_audio(self.chat_id, data.content, title=track_meta['title'], performer=track_meta['artists'][0]['name'])
 
 
 
@@ -204,7 +173,7 @@ class YandexMusicAPI:
             "Accept-Encoding" : "gzip, deflate, br",
             "Accept-Language" : "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
             "Connection" : "keep-alive",
-            "Cookie" : ParseCookies().main(),
+            "Cookie" : ParseCookies(chat_id=self.chat_id).main(),
             "Host" : "music.yandex.ru",
             "Referer" : "https://music.yandex.ru/home",
             "Sec-Fetch-Dest" : "empty",
@@ -217,32 +186,3 @@ class YandexMusicAPI:
         }
         return HEADER
 
-
-    def set_meta_in_db(self, meta):
-        track_name = meta['track']['title']
-        track_id = meta["track"]["id"]
-        album_id = meta["track"]["albums"][0]["id"]
-        artist_id = meta["track"]["artists"][0]["id"]
-        db = sqlite3.connect("./bot.db")
-        db.execute(
-            "insert into Music (TRACK_NAME, TRACK_ID, ALBUM_ID, ARTIST_ID)" +
-            f"values ('{track_name}', {track_id}, {album_id}, {artist_id})"
-        )
-        db.commit()
-        db.close()
-
-
-    def get_meta_from_db(self):
-        db = sqlite3.connect("./bot.db")
-        content = list(db.execute(f"select TRACK_NAME from Music where TRACK_ID={self.track_id};"))
-        db.close()
-        return content[0][0]
-
-
-    def check_track_in_db(self):
-        db = sqlite3.connect("./bot.db")
-        content = list(db.execute(f"select * from Music where TRACK_ID={self.track_id};"))
-        db.close()
-        if len(content) > 0:
-            return True
-        return False

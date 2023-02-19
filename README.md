@@ -7,6 +7,7 @@
     - pyTelegramBotAPI
     - Mutagen
     - requests
+    - Flask
 
 ## Link
 [Tap](https://grtbportfolio.netlify.app)

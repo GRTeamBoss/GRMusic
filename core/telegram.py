@@ -1,5 +1,4 @@
-import pathlib
-import re
+import re, sqlite3
 
 from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -17,12 +16,18 @@ download music from `https://music.yandex.ru`
 ---
 If you want too use this _bot_, you should will pay for this!
 """
+    db = sqlite3.connect("./db.sqlite3")
+    db.execute(f"insert into User (chat_id) values ({message.chat.id});")
+    db.commit()
+    db.close()
     bot.send_message(message.chat.id, intro)
 
 
 def usage(message):
     info = """
 commands:
+/registrate [yandex_login]
+/session_id [Session_id]
 ---
 /trackid [id]
 /albumid [id]
@@ -40,6 +45,10 @@ commands:
 /playlisturl [URI]
 -------
 Example:
+`/registrate` account
+'/session_id' Session_id
+Session_id you find in cookies your browser
+--
 `/trackid` 123213213
 `/playlistid` yandex-best:123213213
 --
@@ -76,12 +85,7 @@ def music_callback(call: CallbackQuery):
 def send_track(obj, identificator=None, name=None, url=None, callback=None):
     track_id = []
     if identificator is True:
-        track = YandexMusicAPI(track=obj.text.split()[1]).download_track()
-        if track is None:
-            bot.send_message(obj.chat.id, "Connection is lost!")
-        else:
-            file = pathlib.Path(track).read_bytes()
-            bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, track=obj.text.split()[1]).download_track()
     elif name is True:
         track_id = YandexMusicParseIds(track_name="".join(obj.text.split()[1:])).get_track_id()
         markup = InlineKeyboardMarkup(row_width=1)
@@ -103,30 +107,16 @@ def send_track(obj, identificator=None, name=None, url=None, callback=None):
                     album_id, track_id = track_match[::]
         else:
             _, _, album_id, _, track_id = track_url[0].split('/')
-        track = YandexMusicAPI(track=track_id, album=album_id).download_track()
-        if track is None:
-            bot.send_message(obj.chat.id, "Connection is lost!")
-        else:
-            file = pathlib.Path(track).read_bytes()
-            bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, track=track_id, album=album_id).download_track()
     elif callback is True:
-        track = YandexMusicAPI(track=obj.data.split()[1], album=obj.data.split()[2]).download_track()
-        file = pathlib.Path(track).read_bytes()
-        bot.send_audio(obj.message.chat.id, file)
+        YandexMusicAPI(chat_id=obj.message.chat.id, track=obj.data.split()[1], album=obj.data.split()[2]).download_track()
 
 
 def send_album(obj, identificator=None, name=None, url=None, callback=None) -> None:
     if identificator is True:
-        album = YandexMusicAPI(album=obj.text.split()[1]).download_album()
-        if album is None:
-            bot.send_message(obj.chat.id, "Invalid value!")
-        else:
-            for track in album:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, album=obj.text.split()[1]).download_album()
     elif name is True:
         album_id = YandexMusicParseIds(album_name=" ".join(obj.text.split()[1:])).get_album_id()
-        album = None
         markup = InlineKeyboardMarkup(row_width=1)
         for item in album_id:
             markup.add(InlineKeyboardButton(f"{item['title']} {item['artists'][0]['name']}", callback_data=f"/albumid {item['id']}"))
@@ -137,33 +127,14 @@ def send_album(obj, identificator=None, name=None, url=None, callback=None) -> N
             album_id = obj.text.split()[1]
         else:
             _, _, album_id = album_url[0].split("/")
-        album = YandexMusicAPI(album=album_id).download_album()
-        if album is None:
-            bot.send_message(obj.chat.id, "Invalid value!")
-        else:
-            for track in album:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, album=album_id).download_album()
     elif callback is True:
-        album = YandexMusicAPI(album=obj.data.split()[1]).download_album()
-        if album is None:
-            bot.send_message(obj.message.chat.id, "Connection is lost!")
-        else:
-            for track in album:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.message.chat.id, file)
+        YandexMusicAPI(chat_id=obj.message.chat.id, album=obj.data.split()[1]).download_album()
 
 
 def send_artist(obj, identificator = None, name=None, url=None, callback=None) -> None:
     if identificator is True:
-        artist = YandexMusicAPI(artist=obj.text.split()[1]).download_artist()
-        if artist is None:
-            bot.send_message(obj.chat.id, "Invalid value!")
-        else:
-            for album in artist:
-                for track in album:
-                    file = pathlib.Path(track).read_bytes()
-                    bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, artist=obj.text.split()[1]).download_artist()
     elif name is True:
         artist_id = YandexMusicParseIds(artist_name=" ".join(obj.text.split()[1:])).get_artist_id()
         markup = InlineKeyboardMarkup(row_width=1)
@@ -176,34 +147,14 @@ def send_artist(obj, identificator = None, name=None, url=None, callback=None) -
             artist_id = obj.text.split()[1]
         else:
             _, _, artist_id = artist_url[0].split("/")
-        artist = YandexMusicAPI(artist=artist_id).download_artist()
-        if artist is None:
-            bot.send_message(obj.chat.id, "Invalid value!")
-        else:
-            for album in artist:
-                for track in album:
-                    file = pathlib.Path(track).read_bytes()
-                    bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, artist=artist_id).download_artist()
     elif callback is True:
-        artist = YandexMusicAPI(artist=obj.data.split()[1]).download_artist()
-        if artist is None:
-            bot.send_message(obj.message.chat.id, "Connection is lost!")
-        else:
-            for album in artist:
-                for track in album:
-                    file = pathlib.Path(track).read_bytes()
-                    bot.send_audio(obj.message.chat.id, file)
+        YandexMusicAPI(chat_id=obj.message.chat.id, artist=obj.data.split()[1]).download_artist()
 
 
 def send_playlist(obj, identificator=None, name=None, url=None, callback=None) -> None:
     if identificator is True:
-        playlist = YandexMusicAPI(playlist=obj.text.split()[1]).download_playlist()
-        if playlist is None:
-            bot.send_message(obj.chat.id, "Connection is lost!")
-        else:
-            for track in playlist:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, playlist=obj.text.split()[1]).download_playlist()
     elif name is True:
         playlist_id = YandexMusicParseIds(playlist_name=" ".join(obj.text.split()[1:])).get_playlist_id()
         markup = InlineKeyboardMarkup(row_width=1)
@@ -216,22 +167,26 @@ def send_playlist(obj, identificator=None, name=None, url=None, callback=None) -
             owner, kind = obj.text.split()[1].split(':')
         else:
             _, _, owner, _, kind = playlist_url[0].split("/")
-        playlist = YandexMusicAPI(playlist=f"{owner}:{kind}").download_playlist()
-        if playlist is None:
-            bot.send_message(obj.chat.id, "Connection is lost!")
-        else:
-            for track in playlist:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.chat.id, file)
+        YandexMusicAPI(chat_id=obj.chat.id, playlist=f"{owner}:{kind}").download_playlist()
     elif callback is True:
         owner, kind = obj.data.split()[1].split(":")
-        playlist = YandexMusicAPI(playlist=f"{owner}:{kind}").download_playlist()
-        if playlist is None:
-            bot.send_message(obj.message.chat.id, "Connection is lost!")
-        else:
-            for track in playlist:
-                file = pathlib.Path(track).read_bytes()
-                bot.send_audio(obj.message.chat.id, file)
+        YandexMusicAPI(chat_id=obj.message.chat.id, playlist=f"{owner}:{kind}").download_playlist()
+
+
+def registration(obj):
+    db = sqlite3.connect("./db.sqlite3")
+    db.execute(f"update User yandex_login='{obj.text.split()[1]}';")
+    db.commit()
+    db.close()
+    bot.send_message(obj.chat.id, f"Your login -> {obj.text.split()[1]}.")
+
+
+def session(obj):
+    db = sqlite3.connect("./db.sqlite3")
+    db.execute(f"update User set Session_id='{obj.text.split()[1]}';")
+    db.commit()
+    db.close()
+    bot.send_message(obj.chat.id, f"Your Session_id -> {obj.text.split()[1]}")
 
 
 

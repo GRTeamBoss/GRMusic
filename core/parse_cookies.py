@@ -4,13 +4,14 @@ import os, sqlite3, time
 class ParseCookies:
 
 
-    def __init__(self) -> None:
+    def __init__(self, chat_id=None) -> None:
         self.MOZILLA_DIRECTORY = "/home/user/.mozilla/firefox/y38kg56w.default-release"
+        self.chat_id = chat_id
+        self._time = "".join(str(time.time())[0:14].split("."))
 
 
-    def parse_sql_cookies(self):
+    def __parse_sql_cookies(self):
         result = ""
-        _time = "".join(str(time.time())[0:14].split("."))
         os.system(f"cp {self.MOZILLA_DIRECTORY}/cookies.sqlite ./TEMP/cookies.sqlite")
         __COOKIES = {
             'yandexuid' : self.parse_sql_name_value('yandexuid'),
@@ -30,7 +31,7 @@ class ParseCookies:
             'lastVisitedPage' : "%7B%7D",
             'yashr' : self.parse_sql_name_value('yashr'),
             'device_id' : "a20e650936390ae7d90d8b61d9a232e8884d0239d",
-            'active_browser_timestamp' : _time,
+            'active_browser_timestamp' : self._time,
             '_ym_isad' : self.parse_sql_name_value('_ym_isad'),
             '_ym_visorc' : self.parse_sql_name_value('_ym_visorc')
         }
@@ -42,14 +43,26 @@ class ParseCookies:
         return result
 
 
+    def parse_sql_cookies(self):
+        result = ""
+        __COOKIES = {
+            'yandex_login' : self.parse_sql_name_value('yandex_login'),
+            'Session_id': self.parse_sql_name_value('Session_id'),
+            'active_browser_timestamp' : self._time,
+        }
+        for key, value in __COOKIES.items():
+            result += f"{key}={value}; "
+        return result
+
+
     def parse_sql_name_value(self, name: str):
-            database = sqlite3.connect("./TEMP/cookies.sqlite")
-            content = list(database.execute(f"select max(id), name, value from moz_cookies where host='.yandex.ru' and name='{name}';"))
-            database.close()
-            if len(content) > 0:
-                return content[0][2]
-            else:
-                return None
+        database = sqlite3.connect("./db.sqlite3")
+        content = list(database.execute(f"select {name} from User;"))
+        database.close()
+        if len(content) > 0:
+            return content[0][0]
+        else:
+            return None
 
 
     def main(self):
