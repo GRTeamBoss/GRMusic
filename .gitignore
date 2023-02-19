@@ -1,6 +1,5 @@
 Music/*
-*.code-workspace
+TEMP/*
 **/__pycache__/
-.vscode/
 bot.db
 **/env.py
