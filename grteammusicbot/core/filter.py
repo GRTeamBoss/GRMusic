@@ -1,8 +1,7 @@
 import sqlite3
 
-from core.yandex_music_download import YandexMusicAPI
-
-from core.token import bot
+from grteammusicbot.core.yandex_music_download import YandexMusicAPI
+from grteammusicbot.core.token import bot
 
 
 def default_command(message, call=False):

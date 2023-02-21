@@ -2,9 +2,9 @@ import re, sqlite3
 
 from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from core.token import bot
-from core.yandex_music_download import YandexMusicAPI
-from core.yandex_music_parse_id import YandexMusicParseIds
+from grteammusibot.core.token import bot
+from grteammusibot.core.yandex_music_download import YandexMusicAPI
+from grteammusibot.core.yandex_music_parse_id import YandexMusicParseIds
 
 
 def start(message):

@@ -3,9 +3,9 @@
 
 import telebot
 
-from core.filter import check_user_info, default_command, music_command_id, music_command_name, music_command_url, user_registrated
-from core.telegram import start, usage, registration, music_callback, music_id, music_name, music_url, session
-from core.token import bot
+from grteammusicbot.core.filter import check_user_info, default_command, music_command_id, music_command_name, music_command_url, user_registrated
+from grteammusicbot.core.telegram import start, usage, registration, music_callback, music_id, music_name, music_url, session
+from grteammusicbot.core.token import bot
 
 
 @bot.message_handler(func=lambda message: default_command(message) is True)

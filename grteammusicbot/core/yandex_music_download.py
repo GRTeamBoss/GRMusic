@@ -3,8 +3,8 @@ import requests, sqlite3, time
 from hashlib import md5
 
 
-from core.parse_cookies import *
-from core.token import bot
+from grteammusicbot.core.parse_cookies import *
+from grteammusicbot.core.token import bot
 
 
 class YandexMusicAPI:
