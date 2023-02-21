@@ -49,4 +49,5 @@ def parse_track_id_callback(call):
 
 
 if __name__ == "__main__":
+    bot.delete_webhook()
     bot.polling(non_stop=True)

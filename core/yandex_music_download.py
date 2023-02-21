@@ -25,7 +25,7 @@ class YandexMusicAPI:
         playlist_info = self.get_playlist_info()
         tracks = playlist_info['playlist']['trackIds']
         for track in tracks:
-            self.track_id = track.split(":")[0]
+            self.track_id = str(track).split(":")[0]
             self.download_track()
 
 
@@ -52,7 +52,6 @@ class YandexMusicAPI:
         URI = f"https://{download_link['host']}/get-mp3/{_sign}/{download_link['ts']}{download_link['path']}?track_id={self.track_id}&play=false"
         data = requests.get(URI)
         if data.status_code == 200:
-            print(self.track_id)
             track_meta = track_info['track']
             filename = "_".join(track_info['track']['title'].split(" "))
             bot.send_audio(self.chat_id, data.content, title=track_meta['title'], performer=track_meta['artists'][0]['name'])
