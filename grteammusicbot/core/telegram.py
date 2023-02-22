@@ -26,7 +26,7 @@ If you want too use this _bot_, you should will pay for this!
 def usage(message):
     info = """
 commands:
-/registrate [yandex_login]
+/registration [yandex_login]
 /session_id [Session_id]
 ---
 /trackid [id]
