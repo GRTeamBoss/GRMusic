@@ -1,5 +1,3 @@
-Music/*
-TEMP/*
 **/__pycache__/
-bot.db
-**/env.py
+**/db.sqlite3
+**/log.txt
