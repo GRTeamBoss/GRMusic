@@ -91,3 +91,9 @@ def check_user_info(message, call=False):
             bot.send_message(message.chat.id, "[#] Sorry, you don\'t have a premium status, please send new <Session_id> or buy YandexPlus for refresh your <Session_id>.")
         return False
     return True
+
+
+def is_admin(message):
+    if str(message.chat.id) == "167628351":
+        return True
+    return False

@@ -1,10 +1,10 @@
-import re, sqlite3
+import re, sqlite3, pathlib
 
 from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from grteammusibot.core.token import bot
-from grteammusibot.core.yandex_music_download import YandexMusicAPI
-from grteammusibot.core.yandex_music_parse_id import YandexMusicParseIds
+from grteammusicbot.core.token import bot
+from grteammusicbot.core.yandex_music_download import YandexMusicAPI
+from grteammusicbot.core.yandex_music_parse_id import YandexMusicParseIds
 
 
 def start(message):
@@ -68,6 +68,11 @@ Session_id you find in cookies your browser
 -
 """
     bot.send_message(message.chat.id, info)
+
+
+def send_log(message: Message):
+    content = pathlib.Path("./log.txt").read_bytes()
+    bot.send_document(message.chat.id, content)
 
 def music_id(message: Message):
     __funcs[message.text.split()[0]](message, identificator=True)

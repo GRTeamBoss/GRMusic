@@ -5,16 +5,15 @@ import logging
 
 import telebot
 
-from grteammusicbot.core.filter import check_user_info, default_command, music_command_id, music_command_name, music_command_url, user_registrated
-from grteammusicbot.core.telegram import start, usage, registration, music_callback, music_id, music_name, music_url, session
+from grteammusicbot.core.filter import check_user_info, default_command, is_admin, music_command_id, music_command_name, music_command_url, user_registrated
+from grteammusicbot.core.telegram import start, usage, registration, music_callback, music_id, music_name, music_url, session, send_log
 from grteammusicbot.core.token import bot
 
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
+logging.basicConfig(filename="log.txt", format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 @bot.message_handler(func=lambda message: default_command(message) is True)
 def bot_commands(message):
-    logger.info(f"{message.chat.username} : {message.text}")
     funcs = {
         "/start": start,
         "/help": usage
@@ -23,32 +22,31 @@ def bot_commands(message):
 
 
 @bot.message_handler(commands=['registration'])
-def registrate_user(message):
-    logger.info(f"{message.chat.username} : {message.text}")
+def registration_user(message):
     registration(message)
 
 
 @bot.message_handler(commands=['session_id'])
 def session_user(message):
-    logger.info(f"{message.chat.username} : {message.text}")
     session(message)
+
+@bot.message_handler(commands=['log'], func=lambda message: is_admin(message) is True)
+def log_user(message):
+    send_log(message)
 
 
 @bot.message_handler(func=lambda message: music_command_name(message) is True and user_registrated(message) is True and check_user_info(message) is True)
 def parse_track_name(message):
-    logger.info(f"{message.chat.username} : {message.text}")
     music_name(message)
 
 
 @bot.message_handler(func=lambda message: music_command_id(message) is True and user_registrated(message) is True and check_user_info(message) is True)
 def parse_track_id(message):
-    logger.info(f"{message.chat.username} : {message.text}")
     music_id(message)
 
 
 @bot.message_handler(func=lambda message: music_command_url(message) is True and user_registrated(message) is True and check_user_info(message) is True)
 def parse_track_url(message):
-    logger.info(f"{message.chat.username} : {message.text}")
     music_url(message)
 
 
@@ -60,5 +58,4 @@ def parse_track_id_callback(call):
 
 
 if __name__ == "__main__":
-    bot.delete_webhook()
     bot.polling(non_stop=True)
