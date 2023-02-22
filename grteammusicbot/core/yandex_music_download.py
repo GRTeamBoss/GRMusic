@@ -5,6 +5,7 @@ from hashlib import md5
 
 from grteammusicbot.core.parse_cookies import *
 from grteammusicbot.core.token import bot
+from grteammusicbot.__main__ import logger
 
 
 class YandexMusicAPI:
@@ -16,7 +17,7 @@ class YandexMusicAPI:
         self.album_id = album
         self.artist_id = artist
         self.playlist_id = playlist
-        self._time = "".join(time.time().__str__().split("."))[::13]
+        self._time = "".join(time.time().__str__().split("."))[0:13]
         self._reverse_time = f"0.{''.join(time.time().__str__().split('.'))[::-1]}"[0:20]
 
 
@@ -55,6 +56,8 @@ class YandexMusicAPI:
             track_meta = track_info['track']
             filename = "_".join(track_info['track']['title'].split(" "))
             bot.send_audio(self.chat_id, data.content, title=track_meta['title'], performer=track_meta['artists'][0]['name'])
+        bot.send_message(self.chat_id, f"{track_info['track']} не скачался.ID={self.track_id}")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -71,6 +74,8 @@ class YandexMusicAPI:
         data = requests.get(URI)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, f"Ссылка для скачивания не получена.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -92,6 +97,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, f"Не удалось получить информацию для получения ссылки для скачивания.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -104,6 +111,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, "Не удалось получить мета-информацию плейлиста.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -115,6 +124,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, "Не удалось получить мета-информацию артиста.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -126,6 +137,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, "Не удалось получить мета-информацию альбома.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
     def get_track_info(self):
@@ -136,6 +149,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, "Не удалось получить мета-информацию трека.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
@@ -163,6 +178,8 @@ class YandexMusicAPI:
         data = requests.get(URI, headers=HEADER)
         if data.status_code == 200:
             return data.json()
+        bot.send_message(self.chat_id, "Не удалось получить мета-информацию пользователя.")
+        logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 

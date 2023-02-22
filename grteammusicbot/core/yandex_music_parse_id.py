@@ -7,7 +7,7 @@ class YandexMusicParseIds:
     __URI = "https://music.yandex.ru/handlers/music-search.jsx?text={query}&type=all&ncrnd={digit}&clientNow={time}&lang=ru&external-domain=music.yandex.ru&overembed=false"
 
 
-    def __init__(self, track_name=None, artist_name=None, album_name=None, playlist_name=None, track=None, artist=None, album=None, playlist=None) -> None:
+    def __init__(self, track_name=None, artist_name=None, album_name=None, playlist_name=None) -> None:
         self.track_name = track_name
         self.artist_name = artist_name
         self.album_name = album_name
