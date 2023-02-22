@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import logging
-
 import telebot
 
 from grteammusicbot.core.filter import check_user_info, default_command, is_admin, music_command_id, music_command_name, music_command_url, user_registrated
 from grteammusicbot.core.telegram import start, usage, registration, music_callback, music_id, music_name, music_url, session, send_log
 from grteammusicbot.core.token import bot
+from grteammusicbot.logger import logger
 
-logging.basicConfig(filename="log.txt", format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 @bot.message_handler(func=lambda message: default_command(message) is True)
 def bot_commands(message):
@@ -52,7 +49,6 @@ def parse_track_url(message):
 
 @bot.callback_query_handler(func=lambda call: music_command_id(call, call=True) is True and user_registrated(call, call=True) is True and check_user_info(call, call=True) is True)
 def parse_track_id_callback(call):
-    logger.info(f"{message.chat.username} : {message.text}")
     music_callback(call)
 
 

@@ -5,7 +5,7 @@ from hashlib import md5
 
 from grteammusicbot.core.parse_cookies import *
 from grteammusicbot.core.token import bot
-from grteammusicbot.__main__ import logger
+from grteammusicbot.logger import logger
 
 
 class YandexMusicAPI:
