@@ -54,10 +54,10 @@ class YandexMusicAPI:
         data = requests.get(URI)
         if data.status_code == 200:
             track_meta = track_info['track']
-            filename = "_".join(track_info['track']['title'].split(" "))
             bot.send_audio(self.chat_id, data.content, title=track_meta['title'], performer=track_meta['artists'][0]['name'])
-        bot.send_message(self.chat_id, f"{track_info['track']} не скачался.ID={self.track_id}")
-        logger.info(f"[{data.request} -> {data.status_code}]")
+        else:
+            bot.send_message(self.chat_id, f"{track_info['track']['title']} не скачался.\nID={self.track_id}")
+            logger.info(f"[{data.request} -> {data.status_code}]")
 
 
 
