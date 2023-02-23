@@ -3,7 +3,7 @@ import requests, time
 from hashlib import md5
 
 
-from grteammusicbot.core.parse_cookies import *
+from grteammusicbot.core.parse_cookies import ParseCookies
 from grteammusicbot.core.token import bot
 from grteammusicbot.logger import logger
 
@@ -216,6 +216,7 @@ class YandexMusicAPI:
         else:
             bot.send_message(self.chat_id, "Не удалось получить мета-информацию пользователя.")
             logger.info(f"[{data.url} -> {data.status_code}]")
+            logger.info(f"[HEADER -> [{HEADER}]]")
             return None
 
 
