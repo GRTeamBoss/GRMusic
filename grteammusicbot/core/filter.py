@@ -83,7 +83,11 @@ def user_registrated(message, call=False):
 
 
 def check_user_info(message, call=False):
-    user_info = YandexMusicAPI().get_user_info()
+    user_info = {"premium": False}
+    if call is True:
+        user_info = YandexMusicAPI(chat_id=message.message.chat.id).get_user_info()
+    else:
+        user_info = YandexMusicAPI(chat_id=message.chat.id).get_user_info()
     if user_info.get('premium', False) is False:
         if call is True:
             bot.send_message(message.message.chat.id, "[#] Sorry, you don\'t have a premium status, please send new <Session_id> or buy YandexPlus for refresh your <Session_id>.")
