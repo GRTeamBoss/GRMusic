@@ -51,7 +51,7 @@ class ParseCookies:
             'active_browser_timestamp' : self._time,
         }
         for key, value in __COOKIES.items():
-            result += f"{key}={value}; "
+            result += f"{key}:{value}; "
         return result
 
 
