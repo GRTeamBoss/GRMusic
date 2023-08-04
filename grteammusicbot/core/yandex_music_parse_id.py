@@ -17,24 +17,36 @@ class YandexMusicParseIds:
 
 
     def get_track_id(self):
+        """
+        Parse track ID for download
+        """
         URI = self.__URI.format(query=self.track_name, digit=self._reverse_time, time=self._time)
         data = requests.get(URI)
         return data.json()['tracks']['items']
 
 
     def get_album_id(self):
+        """
+        Parse album ID for download
+        """
         URI = self.__URI.format(query=self.album_name, digit=self._reverse_time, time=self._time)
         data = requests.get(URI)
         return data.json()['albums']['items']
 
 
     def get_artist_id(self):
+        """
+        Parse artist ID for download
+        """
         URI = self.__URI.format(query=self.artist_name, digit=self._reverse_time, time=self._time)
         data = requests.get(URI)
         return data.json()['artists']['items']
 
 
     def get_playlist_id(self):
+        """
+        Parse playlist ID for download
+        """
         URI = self.__URI.format(query=self.playlist_name, digit=self._reverse_time, time=self._time)
         data = requests.get(URI)
         return data.json()['playlists']['items']

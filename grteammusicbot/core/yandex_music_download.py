@@ -12,6 +12,9 @@ class YandexMusicAPI:
 
 
     def __init__(self, chat_id, track=None, artist=None, album=None, playlist=None) -> None:
+        """
+        Initialize all values for download track, album, playlist or artist from Yandex Music
+        """
         self.chat_id = chat_id
         self.track_id = track
         self.album_id = album
@@ -23,6 +26,9 @@ class YandexMusicAPI:
 
 
     def download_playlist(self):
+        """
+        Download Playlist
+        """
         playlist_info = self.get_playlist_info()
         if playlist_info is None:
             pass
@@ -34,6 +40,9 @@ class YandexMusicAPI:
 
 
     def download_artist(self):
+        """
+        Download Artist
+        """
         artist_info = self.get_artist_info()
         if artist_info is None:
             pass
@@ -45,6 +54,9 @@ class YandexMusicAPI:
 
 
     def download_album(self):
+        """
+        Download Album
+        """
         album_info = self.get_album_info()
         if album_info is None:
             pass
@@ -56,6 +68,9 @@ class YandexMusicAPI:
 
 
     def download_track(self):
+        """
+        Download Track
+        """
         download_link = self.get_download_link()
         track_info = self.get_track_info()
         if download_link is None or track_info is None:
